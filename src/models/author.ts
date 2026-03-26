@@ -6,4 +6,4 @@ export type Author = {
     nationality: string;
     biography?: string;
     createdAt: string;
-}
+};

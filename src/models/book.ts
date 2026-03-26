@@ -12,4 +12,4 @@ export type Book = {
     genres: number[];
     createdAt: string;
     updatedAt: string;
-}
+};
