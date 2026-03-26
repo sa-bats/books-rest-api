@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",     // в какой версии JavaScript будет итоговый код
+    "module": "CommonJS",   // как работают импорты/экспорты
+    "rootDir": "./src",     // где лежит код
+    "outDir": "./dist",     // куда TypeScript будет складывать скомпилированный код
+
+    "strict": true,         // будь максимально строгим
+    "noImplicitAny": true,  // нельзя молча использовать any
+
+    "esModuleInterop": true,    // позволяет нормально импортировать библиотеки типа express.
+    "skipLibCheck": true,       // ускоряет работу.
+    "forceConsistentCasingInFileNames": true    // Помогает избежать ошибок с регистрами (Book.ts vs book.ts).
+  }
+}
