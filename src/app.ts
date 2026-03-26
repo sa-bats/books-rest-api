@@ -1,4 +1,5 @@
 import express from "express";
+import bookRoutes from "./routes/bookRoutes";
 
 // создает сервер
 const app = express();
@@ -10,5 +11,7 @@ app.use(express.json());
 app.get("/health", (req, res) => {
   res.json({ status: "ok" });
 });
+
+app.use("/api/v1/books", bookRoutes);
 
 export default app;
