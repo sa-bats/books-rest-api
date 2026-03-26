@@ -17,5 +17,10 @@
   "bugs": {
     "url": "https://github.com/sa-bats/books-rest-api/issues"
   },
-  "homepage": "https://github.com/sa-bats/books-rest-api#readme"
+  "homepage": "https://github.com/sa-bats/books-rest-api#readme",
+  "dependencies": {
+    "dotenv": "^17.3.1",
+    "express": "^5.2.1",
+    "zod": "^4.3.6"
+  }
 }
