@@ -13,15 +13,22 @@ export function getBookById(id: number): Book | undefined {
 
 // функция для создания новой книги
 export function createBook(book: Book) {
+    // Найти максимальный id среди существующих книг
+    const maxId = books.length > 0                  // Проверяем, есть ли книги в массиве
+        ? Math.max(...books.map(book => book.id))   // Находим максимальный id
+        : 0;    // Если массив книг пустой, начинаем с id 1
+
+    // Создать новый объект книги, добавив id и timestamps
     const newBook = {
-        ...book,
-        id: books.length + 1,
+        ...book,        // Копируем все поля из переданного объекта book
+        id: maxId + 1,  // Устанавливаем id как максимальный id + 1
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
     };
+
     books.push(newBook);
     return newBook;
-}
+};
 
 // функция для обновления книги по id
 export function updateBook(id: number, updatedBook: Partial<Book>) {
@@ -40,7 +47,7 @@ export function updateBook(id: number, updatedBook: Partial<Book>) {
     // Обновить книгу в массиве
     books[bookIndex] = newBook;
     return newBook;
-}
+};
 
 // функция для удаления книги по id
 export function deleteBook(id: number) {
@@ -52,4 +59,4 @@ export function deleteBook(id: number) {
     // Удалить книгу из массива
     books.splice(bookIndex, 1);
     return true;
-}
+};
