@@ -1,11 +1,13 @@
 import * as bookService from "../services/bookService";
 import { Request, Response } from "express";
 
+// Контроллер для получения всех книг
 export const getAllBooks = (req: Request, res: Response) => {
-  const books = bookService.getAllBooks();
-  res.json(books);
+  const books = bookService.getAllBooks();  // Получить все книги из сервиса
+  return res.json(books);
 };
 
+// Контроллер для получения книги по id
 export const getBookById = (req: Request, res: Response) => {
   const id = Number(req.params.id);
   if (isNaN(id)) {
@@ -19,14 +21,16 @@ export const getBookById = (req: Request, res: Response) => {
   }
 };
 
+// Контроллер для создания новой книги
 export const createBook = (req: Request, res: Response) => {
   const bookData = req.body;
   const newBook = bookService.createBook(bookData);
   return res.status(201).json(newBook);
 };
 
+// Контроллер для обновления книги по id
 export const updateBook = (req: Request, res: Response) => {
-    const id = Number(req.params.id);
+    const id = Number(req.params.id); 
     if (isNaN(id)) {
         return res.status(400).json({ message: "Invalid book id" });
     }
@@ -39,6 +43,7 @@ export const updateBook = (req: Request, res: Response) => {
     }
 };
 
+// Контроллер для удаления книги по id
 export const deleteBook = (req: Request, res: Response) => {
     const id = Number(req.params.id);
     if (isNaN(id)) {
