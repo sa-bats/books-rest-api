@@ -2,17 +2,17 @@ import type { Book } from "../models/book";
 import { books } from "../data/books";
 
 // функция для получения всех книг
-export function getAllBooks() {
+export const getAllBooks = () => {
     return books;
 };
 
 // функция для получения книги по id
-export function getBookById(id: number): Book | undefined {
+export const getBookById = (id: number): Book | undefined => {
     return books.find((book) => book.id === id);
 };
 
 // функция для создания новой книги
-export function createBook(book: Book) {
+export const createBook = (book: Book) => {
     // Найти максимальный id среди существующих книг
     const maxId = books.length > 0                  // Проверяем, есть ли книги в массиве
         ? Math.max(...books.map(book => book.id))   // Находим максимальный id
@@ -31,11 +31,11 @@ export function createBook(book: Book) {
 };
 
 // функция для обновления книги по id
-export function updateBook(id: number, updatedBook: Partial<Book>) {
+export const updateBook = (id: number, updatedBook: Partial<Book>) => {
     // Найти индекс книги по id
     const bookIndex = books.findIndex((book) => book.id === id);
     if (bookIndex === -1) {
-        return false; // Если книга не найдена, вернуть false
+        return null; // Если книга не найдена, вернуть null
     }
     const book = books[bookIndex];
     // Создать новый объект книги, объединяя существующую книгу и обновленные поля
@@ -50,11 +50,11 @@ export function updateBook(id: number, updatedBook: Partial<Book>) {
 };
 
 // функция для удаления книги по id
-export function deleteBook(id: number) {
+export const deleteBook = (id: number) => {
     // Найти индекс книги по id
     const bookIndex = books.findIndex((book) => book.id === id);
     if (bookIndex === -1) {
-        return false;  // Если книга не найдена, вернуть false
+        return null;  // Если книга не найдена, вернуть null
     }
     // Удалить книгу из массива
     books.splice(bookIndex, 1);
