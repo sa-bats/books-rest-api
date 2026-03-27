@@ -11,21 +11,23 @@ export const getBookById = (id: number): Book | undefined => {
     return books.find((book) => book.id === id);
 };
 
-// функция для создания новой книги
-export const createBook = (book: Book) => {
-    // Найти максимальный id среди существующих книг
-    const maxId = books.length > 0                  // Проверяем, есть ли книги в массиве
-        ? Math.max(...books.map(book => book.id))   // Находим максимальный id
-        : 0;    // Если массив книг пустой, начинаем с id 1
+// тип для входных данных при создании книги, исключая поля id, createdAt и updatedAt
+type CreateBookInput = Omit<Book, "id" | "createdAt" | "updatedAt">;
 
-    // Создать новый объект книги, добавив id и timestamps
-    const newBook = {
-        ...book,        // Копируем все поля из переданного объекта book
-        id: maxId + 1,  // Устанавливаем id как максимальный id + 1
+// функция для создания новой книги
+export const createBook = (book: CreateBookInput) => {
+    // Найти максимальный id среди существующих книг, чтобы назначить новый id
+    const maxId = books.length > 0
+        ? Math.max(...books.map(b => b.id))
+        : 0;
+    // Создать новый объект книги, добавив id, createdAt и updatedAt
+    const newBook: Book = {
+        id: maxId + 1,
+        ...book,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
     };
-
+    // Добавить новую книгу в массив
     books.push(newBook);
     return newBook;
 };
