@@ -8,12 +8,13 @@ import e, { Request, Response } from "express";
 export const getAllBooks = (req: Request, res: Response) => {
   const year = req.query.year ? Number(req.query.year) : undefined;
   const author = req.query.author ? String(req.query.author) : undefined;
+  const genre = req.query.genre ? String(req.query.genre) : undefined;
 
   if (year !== undefined && Number.isNaN(year)) {
     return res.status(400).json({ message: "Invalid year query parameter" });
   }
 
-  const books = bookService.getAllBooks(year, author);
+  const books = bookService.getAllBooks(year, author, genre);
   return res.json(books);
 };
 

@@ -1,9 +1,10 @@
 import type { Book } from "../models/book";
 import { books } from "../data/books";
 import { authors } from "../data/authors";
+import { genres } from "../data/genres";
 
 // функция для получения всех книг
-export const getAllBooks = (year?: number, author?: string) => {
+export const getAllBooks = (year?: number, author?: string, genre?: string) => {
   let filteredBooks = books;
 
   // Фильтрация по году публикации
@@ -33,6 +34,20 @@ export const getAllBooks = (year?: number, author?: string) => {
 
       return firstNameMatch && lastNameMatch;
     });
+  }
+
+  // Фильтрация по жанру
+  if (genre !== undefined) {
+    // Найти жанр по названию
+    const foundGenre = genres.find((g) => g.name.toLowerCase() === genre.toLowerCase());
+    if (foundGenre) {
+      filteredBooks = filteredBooks.filter((book) => {
+        return book.genres.includes(foundGenre.id);
+      });
+    } else {
+      // Если жанр не найден, вернуть пустой массив
+      filteredBooks = [];
+    }
   }
 
   // Возвращаем отфильтрованные книги
