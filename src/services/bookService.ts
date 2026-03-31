@@ -2,8 +2,16 @@ import type { Book } from "../models/book";
 import { books } from "../data/books";
 
 // функция для получения всех книг
-export const getAllBooks = () => {
-    return books;
+export const getAllBooks = (year?: number) => {
+  let filteredBooks = books;
+
+  if (year !== undefined) {
+    filteredBooks = filteredBooks.filter((book) => {
+      return book.publishedYear === year;
+    });
+  }
+
+  return filteredBooks;
 };
 
 // функция для получения книги по id
@@ -62,3 +70,4 @@ export const deleteBook = (id: number) => {
     books.splice(bookIndex, 1);
     return true;
 };
+

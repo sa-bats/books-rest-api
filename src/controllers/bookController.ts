@@ -1,9 +1,18 @@
+import { authors } from "../data/authors";
+import { books } from "../data/books";
+import { genres } from "../data/genres";
 import * as bookService from "../services/bookService";
-import { Request, Response } from "express";
+import e, { Request, Response } from "express";
 
 // Контроллер для получения всех книг
 export const getAllBooks = (req: Request, res: Response) => {
-  const books = bookService.getAllBooks();  // Получить все книги из сервиса
+  const year = req.query.year ? Number(req.query.year) : undefined;
+
+  if (year !== undefined && Number.isNaN(year)) {
+    return res.status(400).json({ message: "Invalid year query parameter" });
+  }
+
+  const books = bookService.getAllBooks(year);
   return res.json(books);
 };
 
