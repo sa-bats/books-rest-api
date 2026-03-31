@@ -7,12 +7,13 @@ import e, { Request, Response } from "express";
 // Контроллер для получения всех книг
 export const getAllBooks = (req: Request, res: Response) => {
   const year = req.query.year ? Number(req.query.year) : undefined;
+  const author = req.query.author ? String(req.query.author) : undefined;
 
   if (year !== undefined && Number.isNaN(year)) {
     return res.status(400).json({ message: "Invalid year query parameter" });
   }
 
-  const books = bookService.getAllBooks(year);
+  const books = bookService.getAllBooks(year, author);
   return res.json(books);
 };
 

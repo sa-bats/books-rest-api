@@ -1,16 +1,41 @@
 import type { Book } from "../models/book";
 import { books } from "../data/books";
+import { authors } from "../data/authors";
 
 // функция для получения всех книг
-export const getAllBooks = (year?: number) => {
+export const getAllBooks = (year?: number, author?: string) => {
   let filteredBooks = books;
 
+  // Фильтрация по году публикации
   if (year !== undefined) {
     filteredBooks = filteredBooks.filter((book) => {
       return book.publishedYear === year;
     });
   }
 
+  // Фильтрация по автору
+  if (author !== undefined) {
+    const nameParts = author.trim().split(/\s+/);   // Разделение имени на части
+    
+    // Если указано только одно имя, будем искать по фамилии, иначе по имени и фамилии
+    const firstName = nameParts.length > 1 ? nameParts[0] : undefined; 
+    const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : nameParts[0];
+
+    // Фильтрация книг по имени автора
+    filteredBooks = filteredBooks.filter((book) => {
+      // Находим автора книги
+      const bookAuthor = authors.find((a) => a.id === book.authorId);
+      if (!bookAuthor) return false;
+
+      // Сравниваем имя автора с запросом, игнорируя регистр
+      const firstNameMatch = firstName ? bookAuthor.firstName.toLowerCase() === firstName.toLowerCase() : true;
+      const lastNameMatch = lastName ? bookAuthor.lastName.toLowerCase() === lastName.toLowerCase() : true;
+
+      return firstNameMatch && lastNameMatch;
+    });
+  }
+
+  // Возвращаем отфильтрованные книги
   return filteredBooks;
 };
 
