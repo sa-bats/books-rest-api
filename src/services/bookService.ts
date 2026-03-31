@@ -3,52 +3,57 @@ import { books } from "../data/books";
 import { authors } from "../data/authors";
 import { genres } from "../data/genres";
 
+// функция для фильтрации книг по году публикации
+export const filterBooksByYear = (books: Book[], year?: number): Book[] => {
+  if (year === undefined) return books;
+  return books.filter((book) => book.publishedYear === year);
+};
+
+// функция для фильтрации книг по автору
+export const filterBooksByAuthor = (books: Book[], author?: string): Book[] => {
+  if (author === undefined) return books;
+
+  const nameParts = author.trim().split(/\s+/);   // Разделение имени на части
+  
+  // Если указано только одно имя, будем искать по фамилии, иначе по имени и фамилии
+  const firstName = nameParts.length > 1 ? nameParts[0] : undefined; 
+  const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : nameParts[0];
+
+  // Фильтрация книг по имени автора
+  return books.filter((book) => {
+    // Находим автора книги
+    const bookAuthor = authors.find((a) => a.id === book.authorId);
+    if (!bookAuthor) return false;
+
+    // Сравниваем имя автора с запросом, игнорируя регистр
+    const firstNameMatch = firstName ? bookAuthor.firstName.toLowerCase() === firstName.toLowerCase() : true;
+    const lastNameMatch = lastName ? bookAuthor.lastName.toLowerCase() === lastName.toLowerCase() : true;
+
+    return firstNameMatch && lastNameMatch;
+  });
+};
+
+// функция для фильтрации книг по жанру
+export const filterBooksByGenre = (books: Book[], genre?: string): Book[] => {
+  if (genre === undefined) return books;
+
+  // Найти жанр по названию
+  const foundGenre = genres.find((g) => g.name.toLowerCase() === genre.toLowerCase());
+  if (!foundGenre) return []; // Если жанр не найден, вернуть пустой массив
+
+  return books.filter((book) => {
+    return book.genres.includes(foundGenre.id);
+  });
+};
+
 // функция для получения всех книг
 export const getAllBooks = (year?: number, author?: string, genre?: string) => {
   let filteredBooks = books;
 
-  // Фильтрация по году публикации
-  if (year !== undefined) {
-    filteredBooks = filteredBooks.filter((book) => {
-      return book.publishedYear === year;
-    });
-  }
-
-  // Фильтрация по автору
-  if (author !== undefined) {
-    const nameParts = author.trim().split(/\s+/);   // Разделение имени на части
-    
-    // Если указано только одно имя, будем искать по фамилии, иначе по имени и фамилии
-    const firstName = nameParts.length > 1 ? nameParts[0] : undefined; 
-    const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : nameParts[0];
-
-    // Фильтрация книг по имени автора
-    filteredBooks = filteredBooks.filter((book) => {
-      // Находим автора книги
-      const bookAuthor = authors.find((a) => a.id === book.authorId);
-      if (!bookAuthor) return false;
-
-      // Сравниваем имя автора с запросом, игнорируя регистр
-      const firstNameMatch = firstName ? bookAuthor.firstName.toLowerCase() === firstName.toLowerCase() : true;
-      const lastNameMatch = lastName ? bookAuthor.lastName.toLowerCase() === lastName.toLowerCase() : true;
-
-      return firstNameMatch && lastNameMatch;
-    });
-  }
-
-  // Фильтрация по жанру
-  if (genre !== undefined) {
-    // Найти жанр по названию
-    const foundGenre = genres.find((g) => g.name.toLowerCase() === genre.toLowerCase());
-    if (foundGenre) {
-      filteredBooks = filteredBooks.filter((book) => {
-        return book.genres.includes(foundGenre.id);
-      });
-    } else {
-      // Если жанр не найден, вернуть пустой массив
-      filteredBooks = [];
-    }
-  }
+  // Применяем фильтры последовательно
+  filteredBooks = filterBooksByYear(filteredBooks, year);
+  filteredBooks = filterBooksByAuthor(filteredBooks, author);
+  filteredBooks = filterBooksByGenre(filteredBooks, genre);
 
   // Возвращаем отфильтрованные книги
   return filteredBooks;
