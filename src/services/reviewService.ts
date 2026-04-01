@@ -1,7 +1,5 @@
 import { Review } from "../models/review";
-
-// Массив для хранения отзывов (вместо базы данных)
-const reviews: Review[] = [];
+import { reviews } from "../data/reviews";
 
 // функция для получения всех отзывов по id книги
 export const getReviewsByBookId = (bookId: number) => {
