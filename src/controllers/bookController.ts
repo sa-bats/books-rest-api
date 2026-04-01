@@ -9,12 +9,26 @@ export const getAllBooks = (req: Request, res: Response) => {
   const year = req.query.year ? Number(req.query.year) : undefined;
   const author = req.query.author ? String(req.query.author) : undefined;
   const genre = req.query.genre ? String(req.query.genre) : undefined;
+  const sortBy = req.query.sortBy ? String(req.query.sortBy) : undefined;
+  const order = req.query.order ? String(req.query.order) : undefined;
 
+  // Валидация параметров запроса
   if (year !== undefined && Number.isNaN(year)) {
     return res.status(400).json({ message: "Invalid year query parameter" });
   }
 
-  const books = bookService.getAllBooks(year, author, genre);
+  // Проверка формата параметра author (ожидается "FirstName LastName")
+  if (sortBy !== undefined && sortBy !== "title" && sortBy !== "publishedYear") {
+    return res.status(400).json({ message: "Invalid sortBy query parameter" });
+  }
+
+  // Проверка формата параметра order (ожидается "asc" или "desc")
+  if (order !== undefined && order !== "asc" && order !== "desc") {
+    return res.status(400).json({ message: "Invalid order query parameter" });
+  }
+
+  // Получаем отфильтрованные и отсортированные книги из сервиса
+  const books = bookService.getAllBooks(year, author, genre, sortBy, order);
   return res.json(books);
 };
 

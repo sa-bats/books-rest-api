@@ -46,16 +46,50 @@ export const filterBooksByGenre = (books: Book[], genre?: string): Book[] => {
   });
 };
 
+// функция для сортировки книг по полю и порядку
+export const sortBooks = (books: Book[], sortBy?: string, order: string = "asc"): Book[] => {
+  // Если параметр сортировки не указан, возвращаем книги без сортировки
+  if (!sortBy) return books;
+
+  // Создаем копию массива книг для сортировки
+  const sortedBooks = [...books];
+
+  // Сортируем книги по названию
+  if (sortBy === "title") {
+    sortedBooks.sort((a, b) =>
+      order === "desc"
+        ? b.title.localeCompare(a.title)
+        : a.title.localeCompare(b.title)
+    );
+  }
+
+  // Сортировка по году публикации
+  if (sortBy === "publishedYear") {
+    sortedBooks.sort((a, b) =>
+      order === "desc"
+        ? b.publishedYear - a.publishedYear
+        : a.publishedYear - b.publishedYear
+    );
+  }
+
+  return sortedBooks;
+};
+
 // функция для получения всех книг
-export const getAllBooks = (year?: number, author?: string, genre?: string) => {
+export const getAllBooks = (
+  year?: number,
+  author?: string,
+  genre?: string,
+  sortBy?: string,
+  order: string = "asc"
+) => {
   let filteredBooks = books;
 
-  // Применяем фильтры последовательно
   filteredBooks = filterBooksByYear(filteredBooks, year);
   filteredBooks = filterBooksByAuthor(filteredBooks, author);
   filteredBooks = filterBooksByGenre(filteredBooks, genre);
+  filteredBooks = sortBooks(filteredBooks, sortBy, order);
 
-  // Возвращаем отфильтрованные книги
   return filteredBooks;
 };
 
