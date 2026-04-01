@@ -1,5 +1,6 @@
 import express from "express";
 import bookRoutes from "./routes/bookRoutes";
+import { errorHandler } from "./middleware/errorHandler";
 
 // создает сервер
 const app = express();
@@ -7,11 +8,8 @@ const app = express();
 // чтобы сервер понимал JSON
 app.use(express.json());
 
-// тестовый маршрут
-app.get("/health", (req, res) => {
-  res.json({ status: "ok" });
-});
-
 app.use("/api/v1/books", bookRoutes);
+
+app.use(errorHandler);
 
 export default app;
