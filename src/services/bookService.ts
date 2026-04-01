@@ -1,9 +1,119 @@
 import type { Book } from "../models/book";
 import { books } from "../data/books";
+import { authors } from "../data/authors";
+import { genres } from "../data/genres";
+import { start } from "node:repl";
 
-// функция для получения всех книг
-export const getAllBooks = () => {
-    return books;
+// функция для фильтрации книг по году публикации
+export const filterBooksByYear = (books: Book[], year?: number): Book[] => {
+  if (year === undefined) return books;
+  return books.filter((book) => book.publishedYear === year);
+};
+
+// функция для фильтрации книг по автору
+export const filterBooksByAuthor = (books: Book[], author?: string): Book[] => {
+  if (author === undefined) return books;
+
+  const nameParts = author.trim().split(/\s+/);   // Разделение имени на части
+  
+  // Если указано только одно имя, будем искать по фамилии, иначе по имени и фамилии
+  const firstName = nameParts.length > 1 ? nameParts[0] : undefined; 
+  const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : nameParts[0];
+
+  // Фильтрация книг по имени автора
+  return books.filter((book) => {
+    // Находим автора книги
+    const bookAuthor = authors.find((a) => a.id === book.authorId);
+    if (!bookAuthor) return false;
+
+    // Сравниваем имя автора с запросом, игнорируя регистр
+    const firstNameMatch = firstName ? bookAuthor.firstName.toLowerCase() === firstName.toLowerCase() : true;
+    const lastNameMatch = lastName ? bookAuthor.lastName.toLowerCase() === lastName.toLowerCase() : true;
+
+    return firstNameMatch && lastNameMatch;
+  });
+};
+
+// функция для фильтрации книг по жанру
+export const filterBooksByGenre = (books: Book[], genre?: string): Book[] => {
+  if (genre === undefined) return books;
+
+  // Найти жанр по названию
+  const foundGenre = genres.find((g) => g.name.toLowerCase() === genre.toLowerCase());
+  if (!foundGenre) return []; // Если жанр не найден, вернуть пустой массив
+
+  return books.filter((book) => {
+    return book.genres.includes(foundGenre.id);
+  });
+};
+
+// функция для сортировки книг по полю и порядку
+export const sortBooks = (books: Book[], sortBy?: string, order: string = "asc"): Book[] => {
+  // Если параметр сортировки не указан, возвращаем книги без сортировки
+  if (!sortBy) return books;
+
+  // Создаем копию массива книг для сортировки
+  const sortedBooks = [...books];
+
+  // Сортируем книги по названию
+  if (sortBy === "title") {
+    sortedBooks.sort((a, b) =>
+      order === "desc"
+        ? b.title.localeCompare(a.title)
+        : a.title.localeCompare(b.title)
+    );
+  }
+
+  // Сортировка по году публикации
+  if (sortBy === "publishedYear") {
+    sortedBooks.sort((a, b) =>
+      order === "desc"
+        ? b.publishedYear - a.publishedYear
+        : a.publishedYear - b.publishedYear
+    );
+  }
+
+  return sortedBooks;
+};
+
+export const paginateBooks = (books: Book[], page: number = 1, limit: number = 10) => {
+  const totalItems = books.length;
+  const totalPages = Math.ceil(totalItems / limit);
+  const startIndex = (page - 1) * limit;
+  const endIndex = startIndex + limit;
+
+  const paginatedBooks = books.slice(startIndex, endIndex);
+
+  return {
+    data: paginatedBooks,
+    pagination: {
+      currentPage: page,
+      totalPages,
+      totalItems,
+      itemsPerPage: limit,
+      hasNextPage: page < totalPages,
+      hasPreviousPage: page > 1,
+    },
+  };
+};
+
+export const getAllBooks = (
+  year?: number,
+  author?: string,
+  genre?: string,
+  sortBy?: string,
+  order: string = "asc",
+  page: number = 1,
+  limit: number = 10
+) => {
+  let filteredBooks = books;
+
+  filteredBooks = filterBooksByYear(filteredBooks, year);
+  filteredBooks = filterBooksByAuthor(filteredBooks, author);
+  filteredBooks = filterBooksByGenre(filteredBooks, genre);
+  filteredBooks = sortBooks(filteredBooks, sortBy, order);
+
+  return paginateBooks(filteredBooks, page, limit);
 };
 
 // функция для получения книги по id
@@ -62,3 +172,4 @@ export const deleteBook = (id: number) => {
     books.splice(bookIndex, 1);
     return true;
 };
+
