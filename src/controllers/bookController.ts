@@ -1,12 +1,10 @@
-import { authors } from "../data/authors";
-import { books } from "../data/books";
-import { genres } from "../data/genres";
 import * as bookService from "../services/bookService";
-import e, { Request, Response } from "express";
+import { Request, Response, NextFunction } from "express";
 import { createBookSchema, updateBookSchema } from "../validators/bookSchemas";
+import { AppError } from "../utils/AppError";
 
 // Контроллер для получения всех книг
-export const getAllBooks = (req: Request, res: Response) => {
+export const getAllBooks = (req: Request, res: Response, next: NextFunction) => {
   const year = req.query.year ? Number(req.query.year) : undefined;
   const author = req.query.author ? String(req.query.author) : undefined;
   const genre = req.query.genre ? String(req.query.genre) : undefined;
@@ -16,23 +14,23 @@ export const getAllBooks = (req: Request, res: Response) => {
   const limit = req.query.limit ? Number(req.query.limit) : 10;
 
   if (year !== undefined && Number.isNaN(year)) {
-    return res.status(400).json({ message: "Invalid year query parameter" });
+    return next(new AppError("Invalid year query parameter", 400));
   }
 
   if (sortBy !== undefined && sortBy !== "title" && sortBy !== "publishedYear") {
-    return res.status(400).json({ message: "Invalid sortBy query parameter" });
+    return next(new AppError("Invalid sortBy query parameter", 400));
   }
 
   if (order !== undefined && order !== "asc" && order !== "desc") {
-    return res.status(400).json({ message: "Invalid order query parameter" });
+    return next(new AppError("Invalid order query parameter", 400));
   }
 
   if (Number.isNaN(page) || page < 1) {
-    return res.status(400).json({ message: "Invalid page query parameter" });
+    return next(new AppError("Invalid page query parameter", 400));
   }
 
   if (Number.isNaN(limit) || limit < 1) {
-    return res.status(400).json({ message: "Invalid limit query parameter" });
+    return next(new AppError("Invalid limit query parameter", 400));
   }
 
   const result = bookService.getAllBooks(year, author, genre, sortBy, order, page, limit);
@@ -40,31 +38,28 @@ export const getAllBooks = (req: Request, res: Response) => {
 };
 
 // Контроллер для получения книги по id
-export const getBookById = (req: Request, res: Response) => {
+export const getBookById = (req: Request, res: Response, next: NextFunction) => {
   const id = Number(req.params.id);
-  if (isNaN(id)) {
-    return res.status(400).json({ message: "Invalid book id" });
+
+  if (Number.isNaN(id)) {
+    return next(new AppError("Invalid book id", 400));
   }
+
   const book = bookService.getBookById(id);
-  if (book) {
-    return res.json(book);
-  } else {
-    return res.status(404).json({ message: "Book not found" });
+
+  if (!book) {
+    return next(new AppError("Book not found", 404));
   }
+
+  return res.json(book);
 };
 
 // Контроллер для создания новой книги
-export const createBook = (req: Request, res: Response) => {
+export const createBook = (req: Request, res: Response, next: NextFunction) => {
   const parsed = createBookSchema.safeParse(req.body);
 
   if (!parsed.success) {
-    return res.status(400).json({
-      error: "Validation failed",
-      details: parsed.error.issues.map((issue) => ({
-        field: issue.path.join("."),
-        message: issue.message,
-      })),
-    });
+    return next(new AppError("Validation failed", 400));
   }
 
   const newBook = bookService.createBook(parsed.data);
@@ -72,39 +67,41 @@ export const createBook = (req: Request, res: Response) => {
 };
 
 // Контроллер для обновления книги по id
-export const updateBook = (req: Request, res: Response) => {
-    const id = Number(req.params.id); 
-    if (Number.isNaN(id)){
-        return res.status(400).json({ message: "Invalid book id" });
-    }
-    const parsed = updateBookSchema.safeParse(req.body);
-    if (!parsed.success) {
-        return res.status(400).json({
-            error: "Validation failed",
-            details: parsed.error.issues.map((issue) => ({
-                field: issue.path.join("."),
-                message: issue.message,
-            })),
-        });
-    }
-    const updatedBook = bookService.updateBook(id, parsed.data);
-    if (updatedBook) {
-        return res.json(updatedBook);
-    } else {
-        return res.status(404).json({ message: "Book not found" });
-    }
+export const updateBook = (req: Request, res: Response, next: NextFunction) => {
+  const id = Number(req.params.id);
+
+  if (Number.isNaN(id)) {
+    return next(new AppError("Invalid book id", 400));
+  }
+
+  const parsed = updateBookSchema.safeParse(req.body);
+
+  if (!parsed.success) {
+    return next(new AppError("Validation failed", 400));
+  }
+
+  const updatedBook = bookService.updateBook(id, parsed.data);
+
+  if (!updatedBook) {
+    return next(new AppError("Book not found", 404));
+  }
+
+  return res.json(updatedBook);
 };
 
 // Контроллер для удаления книги по id
-export const deleteBook = (req: Request, res: Response) => {
-    const id = Number(req.params.id);
-    if (isNaN(id)) {
-        return res.status(400).json({ message: "Invalid book id" });
-    }
-    const deletedBook = bookService.deleteBook(id);
-    if (deletedBook) {
-        return res.json({ message: "Book deleted successfully" });
-    } else {
-        return res.status(404).json({ message: "Book not found" });
-    }
+export const deleteBook = (req: Request, res: Response, next: NextFunction) => {
+  const id = Number(req.params.id);
+
+  if (Number.isNaN(id)) {
+    return next(new AppError("Invalid book id", 400));
+  }
+
+  const deletedBook = bookService.deleteBook(id);
+
+  if (!deletedBook) {
+    return next(new AppError("Book not found", 404));
+  }
+
+  return res.json({ message: "Book deleted successfully" });
 };
