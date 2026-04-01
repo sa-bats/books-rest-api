@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import * as reviewService from "../services/reviewService";
+import { createReviewSchema } from "../validators/reviewSchemas";
 
 // Контроллер для получения всех отзывов по id книги
 export const getReviewsByBookId = (req: Request, res: Response) => {
@@ -17,8 +18,17 @@ export const createReview = (req: Request, res: Response) => {
     if (Number.isNaN(bookId)) {
         return res.status(400).json({ message: "Invalid book id" });
     }
-    const reviewData = req.body;
-    const newReview = reviewService.createReview({ ...reviewData, bookId });
+    const parsed = createReviewSchema.safeParse(req.body);
+    if (!parsed.success) {
+        return res.status(400).json({
+            error: "Validation failed",
+            details: parsed.error.issues.map((issue) => ({
+                field: issue.path.join("."),
+                message: issue.message,
+            })),
+        });
+    }
+    const newReview = reviewService.createReview({ ...parsed.data, bookId, comment: parsed.data.comment || "" });
     return res.status(201).json(newReview);
 };
 

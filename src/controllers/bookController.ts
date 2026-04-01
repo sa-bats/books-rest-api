@@ -3,6 +3,7 @@ import { books } from "../data/books";
 import { genres } from "../data/genres";
 import * as bookService from "../services/bookService";
 import e, { Request, Response } from "express";
+import { createBookSchema, updateBookSchema } from "../validators/bookSchemas";
 
 // Контроллер для получения всех книг
 export const getAllBooks = (req: Request, res: Response) => {
@@ -54,19 +55,39 @@ export const getBookById = (req: Request, res: Response) => {
 
 // Контроллер для создания новой книги
 export const createBook = (req: Request, res: Response) => {
-  const bookData = req.body;
-  const newBook = bookService.createBook(bookData);
+  const parsed = createBookSchema.safeParse(req.body);
+
+  if (!parsed.success) {
+    return res.status(400).json({
+      error: "Validation failed",
+      details: parsed.error.issues.map((issue) => ({
+        field: issue.path.join("."),
+        message: issue.message,
+      })),
+    });
+  }
+
+  const newBook = bookService.createBook(parsed.data);
   return res.status(201).json(newBook);
 };
 
 // Контроллер для обновления книги по id
 export const updateBook = (req: Request, res: Response) => {
     const id = Number(req.params.id); 
-    if (isNaN(id)) {
+    if (Number.isNaN(id)){
         return res.status(400).json({ message: "Invalid book id" });
     }
-    const updatedData = req.body;
-    const updatedBook = bookService.updateBook(id, updatedData);
+    const parsed = updateBookSchema.safeParse(req.body);
+    if (!parsed.success) {
+        return res.status(400).json({
+            error: "Validation failed",
+            details: parsed.error.issues.map((issue) => ({
+                field: issue.path.join("."),
+                message: issue.message,
+            })),
+        });
+    }
+    const updatedBook = bookService.updateBook(id, parsed.data);
     if (updatedBook) {
         return res.json(updatedBook);
     } else {
