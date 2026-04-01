@@ -11,25 +11,31 @@ export const getAllBooks = (req: Request, res: Response) => {
   const genre = req.query.genre ? String(req.query.genre) : undefined;
   const sortBy = req.query.sortBy ? String(req.query.sortBy) : undefined;
   const order = req.query.order ? String(req.query.order) : undefined;
+  const page = req.query.page ? Number(req.query.page) : 1;
+  const limit = req.query.limit ? Number(req.query.limit) : 10;
 
-  // Валидация параметров запроса
   if (year !== undefined && Number.isNaN(year)) {
     return res.status(400).json({ message: "Invalid year query parameter" });
   }
 
-  // Проверка формата параметра author (ожидается "FirstName LastName")
   if (sortBy !== undefined && sortBy !== "title" && sortBy !== "publishedYear") {
     return res.status(400).json({ message: "Invalid sortBy query parameter" });
   }
 
-  // Проверка формата параметра order (ожидается "asc" или "desc")
   if (order !== undefined && order !== "asc" && order !== "desc") {
     return res.status(400).json({ message: "Invalid order query parameter" });
   }
 
-  // Получаем отфильтрованные и отсортированные книги из сервиса
-  const books = bookService.getAllBooks(year, author, genre, sortBy, order);
-  return res.json(books);
+  if (Number.isNaN(page) || page < 1) {
+    return res.status(400).json({ message: "Invalid page query parameter" });
+  }
+
+  if (Number.isNaN(limit) || limit < 1) {
+    return res.status(400).json({ message: "Invalid limit query parameter" });
+  }
+
+  const result = bookService.getAllBooks(year, author, genre, sortBy, order, page, limit);
+  return res.json(result);
 };
 
 // Контроллер для получения книги по id

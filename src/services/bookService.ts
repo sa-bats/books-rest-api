@@ -2,6 +2,7 @@ import type { Book } from "../models/book";
 import { books } from "../data/books";
 import { authors } from "../data/authors";
 import { genres } from "../data/genres";
+import { start } from "node:repl";
 
 // функция для фильтрации книг по году публикации
 export const filterBooksByYear = (books: Book[], year?: number): Book[] => {
@@ -75,13 +76,35 @@ export const sortBooks = (books: Book[], sortBy?: string, order: string = "asc")
   return sortedBooks;
 };
 
-// функция для получения всех книг
+export const paginateBooks = (books: Book[], page: number = 1, limit: number = 10) => {
+  const totalItems = books.length;
+  const totalPages = Math.ceil(totalItems / limit);
+  const startIndex = (page - 1) * limit;
+  const endIndex = startIndex + limit;
+
+  const paginatedBooks = books.slice(startIndex, endIndex);
+
+  return {
+    data: paginatedBooks,
+    pagination: {
+      currentPage: page,
+      totalPages,
+      totalItems,
+      itemsPerPage: limit,
+      hasNextPage: page < totalPages,
+      hasPreviousPage: page > 1,
+    },
+  };
+};
+
 export const getAllBooks = (
   year?: number,
   author?: string,
   genre?: string,
   sortBy?: string,
-  order: string = "asc"
+  order: string = "asc",
+  page: number = 1,
+  limit: number = 10
 ) => {
   let filteredBooks = books;
 
@@ -90,7 +113,7 @@ export const getAllBooks = (
   filteredBooks = filterBooksByGenre(filteredBooks, genre);
   filteredBooks = sortBooks(filteredBooks, sortBy, order);
 
-  return filteredBooks;
+  return paginateBooks(filteredBooks, page, limit);
 };
 
 // функция для получения книги по id
