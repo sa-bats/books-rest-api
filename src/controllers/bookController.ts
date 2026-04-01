@@ -3,6 +3,7 @@ import { books } from "../data/books";
 import { genres } from "../data/genres";
 import * as bookService from "../services/bookService";
 import e, { Request, Response } from "express";
+import { createBookSchema } from "../validators/bookSchemas";
 
 // Контроллер для получения всех книг
 export const getAllBooks = (req: Request, res: Response) => {
@@ -54,8 +55,19 @@ export const getBookById = (req: Request, res: Response) => {
 
 // Контроллер для создания новой книги
 export const createBook = (req: Request, res: Response) => {
-  const bookData = req.body;
-  const newBook = bookService.createBook(bookData);
+  const parsed = createBookSchema.safeParse(req.body);
+
+  if (!parsed.success) {
+    return res.status(400).json({
+      error: "Validation failed",
+      details: parsed.error.issues.map((issue) => ({
+        field: issue.path.join("."),
+        message: issue.message,
+      })),
+    });
+  }
+
+  const newBook = bookService.createBook(parsed.data);
   return res.status(201).json(newBook);
 };
 
