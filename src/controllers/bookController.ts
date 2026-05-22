@@ -59,7 +59,16 @@ export const createBook = (req: Request, res: Response, next: NextFunction) => {
   const parsed = createBookSchema.safeParse(req.body);
 
   if (!parsed.success) {
-    return next(new AppError("Validation failed", 400));
+    const details = parsed.error.issues.map((issue) => ({
+      field: issue.path.join("."),
+      message: issue.message,
+    }));
+    return next(new AppError("Validation failed", 400, details));
+  }
+
+  const existingBook = bookService.getBookByIsbn(parsed.data.isbn);
+  if (existingBook) {
+    return next(new AppError("Book with this ISBN already exists", 409));
   }
 
   const newBook = bookService.createBook(parsed.data);
@@ -77,7 +86,18 @@ export const updateBook = (req: Request, res: Response, next: NextFunction) => {
   const parsed = updateBookSchema.safeParse(req.body);
 
   if (!parsed.success) {
-    return next(new AppError("Validation failed", 400));
+    const details = parsed.error.issues.map((issue) => ({
+      field: issue.path.join("."),
+      message: issue.message,
+    }));
+    return next(new AppError("Validation failed", 400, details));
+  }
+
+  if (parsed.data.isbn) {
+    const existingBook = bookService.getBookByIsbn(parsed.data.isbn);
+    if (existingBook && existingBook.id !== id) {
+      return next(new AppError("Book with this ISBN already exists", 409));
+    }
   }
 
   const updatedBook = bookService.updateBook(id, parsed.data);

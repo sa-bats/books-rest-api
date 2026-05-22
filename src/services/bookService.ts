@@ -2,8 +2,6 @@ import type { Book } from "../models/book";
 import { books } from "../data/books";
 import { authors } from "../data/authors";
 import { genres } from "../data/genres";
-import { start } from "node:repl";
-
 // функция для фильтрации книг по году публикации
 export const filterBooksByYear = (books: Book[], year?: number): Book[] => {
   if (year === undefined) return books;
@@ -119,6 +117,11 @@ export const getAllBooks = (
 // функция для получения книги по id
 export const getBookById = (id: number): Book | undefined => {
     return books.find((book) => book.id === id);
+};
+
+// функция для проверки существования книги по isbn
+export const getBookByIsbn = (isbn: string): Book | undefined => {
+    return books.find((book) => book.isbn === isbn);
 };
 
 // тип для входных данных при создании книги, исключая поля id, createdAt и updatedAt
