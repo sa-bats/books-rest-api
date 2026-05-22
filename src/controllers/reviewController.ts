@@ -10,6 +10,12 @@ export const getReviewsByBookId = (req: Request, res: Response, next: NextFuncti
     if (Number.isNaN(bookId)) {
         return next(new AppError("Invalid book id", 400));
     }
+
+    const book = bookService.getBookById(bookId);
+    if (!book) {
+        return next(new AppError("Book not found", 404));
+    }
+
     const reviews = reviewService.getReviewsByBookId(bookId);
     return res.json(reviews);
 };
@@ -35,7 +41,7 @@ export const createReview = (req: Request, res: Response, next: NextFunction) =>
         return next(new AppError("Validation failed", 400, details));
     }
 
-    const newReview = reviewService.createReview({ ...parsed.data, bookId, comment: parsed.data.comment ?? "" });
+    const newReview = reviewService.createReview({ ...parsed.data, bookId });
     return res.status(201).json(newReview);
 };
 
