@@ -20,6 +20,7 @@
   },
   "homepage": "https://github.com/sa-bats/books-rest-api#readme",
   "dependencies": {
+    "@prisma/adapter-pg": "^7.8.0",
     "@prisma/client": "^7.8.0",
     "dotenv": "^17.3.1",
     "express": "^5.2.1",
