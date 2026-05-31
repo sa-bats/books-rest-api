@@ -153,6 +153,21 @@ export const books: Book[] = [
   },
   {
     id: 11,
+    title: "The Cherry Orchard",
+    isbn: "9780140447248",
+    publishedYear: 1904,
+    pageCount: 128,
+    language: "English",
+    description:
+      "A tragicomedy about an aristocratic Russian family who lose their estate, including a beloved cherry orchard.",
+    authorId: 5,
+    publisherId: 1,
+    genres: [1, 7],
+    createdAt: "2026-03-27T10:00:00.000Z",
+    updatedAt: "2026-03-27T10:00:00.000Z",
+  },
+  {
+    id: 12,
     title: "Eugene Onegin",
     isbn: "9780199538645",
     publishedYear: 1833,

@@ -20,4 +20,10 @@ export const updateBookSchema = z.object({
   isbn: z.string().min(1, "ISBN is required").optional(),
   publishedYear: z.number().int().optional(),
   pageCount: z.number().int().positive().optional(),
+  language: z.string().min(1, "Language is required").optional(),
+  description: z.string().min(1, "Description is required").optional(),
+  coverImage: z.string().optional(),
+  authorId: z.number().int().positive().optional(),
+  publisherId: z.number().int().positive().optional(),
+  genres: z.array(z.number().int().positive()).min(1, "At least one genre is required").optional(),
 });

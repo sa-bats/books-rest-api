@@ -1,91 +1,77 @@
-import type { Book } from "../models/book";
-import { books } from "../data/books";
-import { authors } from "../data/authors";
-import { genres } from "../data/genres";
-import { start } from "node:repl";
+import { Prisma } from "@prisma/client";
+import { prisma } from "../lib/prisma";
 
-// функция для фильтрации книг по году публикации
-export const filterBooksByYear = (books: Book[], year?: number): Book[] => {
-  if (year === undefined) return books;
-  return books.filter((book) => book.publishedYear === year);
+type CreateBookInput = {
+  title: string;
+  isbn: string;
+  publishedYear: number;
+  pageCount: number;
+  language: string;
+  description: string;
+  coverImage?: string;
+  authorId: number;
+  publisherId: number;
+  genres: number[];
 };
 
-// функция для фильтрации книг по автору
-export const filterBooksByAuthor = (books: Book[], author?: string): Book[] => {
-  if (author === undefined) return books;
+const bookInclude = {
+  author: true,
+  publisher: true,
+  genres: true,
+} as const;
 
-  const nameParts = author.trim().split(/\s+/);   // Разделение имени на части
-  
-  // Если указано только одно имя, будем искать по фамилии, иначе по имени и фамилии
-  const firstName = nameParts.length > 1 ? nameParts[0] : undefined; 
-  const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : nameParts[0];
+export const getAllBooks = async (
+  year?: number,
+  author?: string,
+  genre?: string,
+  sortBy?: string,
+  order: string = "asc",
+  page: number = 1,
+  limit: number = 10
+) => {
+  const where: Prisma.BookWhereInput = {};
 
-  // Фильтрация книг по имени автора
-  return books.filter((book) => {
-    // Находим автора книги
-    const bookAuthor = authors.find((a) => a.id === book.authorId);
-    if (!bookAuthor) return false;
-
-    // Сравниваем имя автора с запросом, игнорируя регистр
-    const firstNameMatch = firstName ? bookAuthor.firstName.toLowerCase() === firstName.toLowerCase() : true;
-    const lastNameMatch = lastName ? bookAuthor.lastName.toLowerCase() === lastName.toLowerCase() : true;
-
-    return firstNameMatch && lastNameMatch;
-  });
-};
-
-// функция для фильтрации книг по жанру
-export const filterBooksByGenre = (books: Book[], genre?: string): Book[] => {
-  if (genre === undefined) return books;
-
-  // Найти жанр по названию
-  const foundGenre = genres.find((g) => g.name.toLowerCase() === genre.toLowerCase());
-  if (!foundGenre) return []; // Если жанр не найден, вернуть пустой массив
-
-  return books.filter((book) => {
-    return book.genres.includes(foundGenre.id);
-  });
-};
-
-// функция для сортировки книг по полю и порядку
-export const sortBooks = (books: Book[], sortBy?: string, order: string = "asc"): Book[] => {
-  // Если параметр сортировки не указан, возвращаем книги без сортировки
-  if (!sortBy) return books;
-
-  // Создаем копию массива книг для сортировки
-  const sortedBooks = [...books];
-
-  // Сортируем книги по названию
-  if (sortBy === "title") {
-    sortedBooks.sort((a, b) =>
-      order === "desc"
-        ? b.title.localeCompare(a.title)
-        : a.title.localeCompare(b.title)
-    );
+  if (year !== undefined) {
+    where.publishedYear = year;
   }
 
-  // Сортировка по году публикации
-  if (sortBy === "publishedYear") {
-    sortedBooks.sort((a, b) =>
-      order === "desc"
-        ? b.publishedYear - a.publishedYear
-        : a.publishedYear - b.publishedYear
-    );
+  if (author !== undefined) {
+    const nameParts = author.trim().split(/\s+/);
+    if (nameParts.length > 1) {
+      where.author = {
+        firstName: { equals: nameParts[0], mode: "insensitive" },
+        lastName: { equals: nameParts.slice(1).join(" "), mode: "insensitive" },
+      };
+    } else {
+      where.author = {
+        lastName: { equals: nameParts[0], mode: "insensitive" },
+      };
+    }
   }
 
-  return sortedBooks;
-};
+  if (genre !== undefined) {
+    where.genres = { some: { name: { equals: genre, mode: "insensitive" } } };
+  }
 
-export const paginateBooks = (books: Book[], page: number = 1, limit: number = 10) => {
-  const totalItems = books.length;
+  const orderBy: Prisma.BookOrderByWithRelationInput | undefined = sortBy
+    ? { [sortBy]: order as Prisma.SortOrder }
+    : undefined;
+
+  const [totalItems, data] = await Promise.all([
+    prisma.book.count({ where }),
+    prisma.book.findMany({
+      where,
+      orderBy,
+      skip: (page - 1) * limit,
+      take: limit,
+      include: bookInclude,
+    }),
+  ]);
+
   const totalPages = Math.ceil(totalItems / limit);
-  const startIndex = (page - 1) * limit;
-  const endIndex = startIndex + limit;
-
-  const paginatedBooks = books.slice(startIndex, endIndex);
 
   return {
-    data: paginatedBooks,
+    data,
     pagination: {
       currentPage: page,
       totalPages,
@@ -97,79 +83,54 @@ export const paginateBooks = (books: Book[], page: number = 1, limit: number = 1
   };
 };
 
-export const getAllBooks = (
-  year?: number,
-  author?: string,
-  genre?: string,
-  sortBy?: string,
-  order: string = "asc",
-  page: number = 1,
-  limit: number = 10
-) => {
-  let filteredBooks = books;
-
-  filteredBooks = filterBooksByYear(filteredBooks, year);
-  filteredBooks = filterBooksByAuthor(filteredBooks, author);
-  filteredBooks = filterBooksByGenre(filteredBooks, genre);
-  filteredBooks = sortBooks(filteredBooks, sortBy, order);
-
-  return paginateBooks(filteredBooks, page, limit);
+export const getBookById = async (id: number) => {
+  return prisma.book.findUnique({ where: { id }, include: bookInclude });
 };
 
-// функция для получения книги по id
-export const getBookById = (id: number): Book | undefined => {
-    return books.find((book) => book.id === id);
+export const getBookByIsbn = async (isbn: string) => {
+  return prisma.book.findUnique({ where: { isbn } });
 };
 
-// тип для входных данных при создании книги, исключая поля id, createdAt и updatedAt
-type CreateBookInput = Omit<Book, "id" | "createdAt" | "updatedAt">;
-
-// функция для создания новой книги
-export const createBook = (book: CreateBookInput) => {
-    // Найти максимальный id среди существующих книг, чтобы назначить новый id
-    const maxId = books.length > 0
-        ? Math.max(...books.map(b => b.id))
-        : 0;
-    // Создать новый объект книги, добавив id, createdAt и updatedAt
-    const newBook: Book = {
-        id: maxId + 1,
-        ...book,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-    };
-    // Добавить новую книгу в массив
-    books.push(newBook);
-    return newBook;
+export const createBook = async (data: CreateBookInput) => {
+  const { genres, ...bookData } = data;
+  return prisma.book.create({
+    data: {
+      ...bookData,
+      genres: { connect: genres.map((id) => ({ id })) },
+    },
+    include: bookInclude,
+  });
 };
 
-// функция для обновления книги по id
-export const updateBook = (id: number, updatedBook: Partial<Book>) => {
-    // Найти индекс книги по id
-    const bookIndex = books.findIndex((book) => book.id === id);
-    if (bookIndex === -1) {
-        return null; // Если книга не найдена, вернуть null
+export const updateBook = async (id: number, data: Partial<CreateBookInput>) => {
+  const { genres, ...rest } = data;
+  try {
+    return await prisma.book.update({
+      where: { id },
+      data: {
+        ...rest,
+        ...(genres !== undefined && {
+          genres: { set: genres.map((gId) => ({ id: gId })) },
+        }),
+      },
+      include: bookInclude,
+    });
+  } catch (e) {
+    if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2025") {
+      return null;
     }
-    const book = books[bookIndex];
-    // Создать новый объект книги, объединяя существующую книгу и обновленные поля
-    const newBook = {
-        ...book,
-        ...updatedBook,
-        updatedAt: new Date().toISOString(),
-    };
-    // Обновить книгу в массиве
-    books[bookIndex] = newBook;
-    return newBook;
+    throw e;
+  }
 };
 
-// функция для удаления книги по id
-export const deleteBook = (id: number) => {
-    // Найти индекс книги по id
-    const bookIndex = books.findIndex((book) => book.id === id);
-    if (bookIndex === -1) {
-        return null;  // Если книга не найдена, вернуть null
-    }
-    // Удалить книгу из массива
-    books.splice(bookIndex, 1);
+export const deleteBook = async (id: number) => {
+  try {
+    await prisma.book.delete({ where: { id } });
     return true;
+  } catch (e) {
+    if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2025") {
+      return null;
+    }
+    throw e;
+  }
 };
-

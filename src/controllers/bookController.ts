@@ -3,8 +3,7 @@ import { Request, Response, NextFunction } from "express";
 import { createBookSchema, updateBookSchema } from "../validators/bookSchemas";
 import { AppError } from "../utils/AppError";
 
-// Контроллер для получения всех книг
-export const getAllBooks = (req: Request, res: Response, next: NextFunction) => {
+export const getAllBooks = async (req: Request, res: Response, next: NextFunction) => {
   const year = req.query.year ? Number(req.query.year) : undefined;
   const author = req.query.author ? String(req.query.author) : undefined;
   const genre = req.query.genre ? String(req.query.genre) : undefined;
@@ -33,19 +32,18 @@ export const getAllBooks = (req: Request, res: Response, next: NextFunction) => 
     return next(new AppError("Invalid limit query parameter", 400));
   }
 
-  const result = bookService.getAllBooks(year, author, genre, sortBy, order, page, limit);
+  const result = await bookService.getAllBooks(year, author, genre, sortBy, order, page, limit);
   return res.json(result);
 };
 
-// Контроллер для получения книги по id
-export const getBookById = (req: Request, res: Response, next: NextFunction) => {
+export const getBookById = async (req: Request, res: Response, next: NextFunction) => {
   const id = Number(req.params.id);
 
   if (Number.isNaN(id)) {
     return next(new AppError("Invalid book id", 400));
   }
 
-  const book = bookService.getBookById(id);
+  const book = await bookService.getBookById(id);
 
   if (!book) {
     return next(new AppError("Book not found", 404));
@@ -54,20 +52,27 @@ export const getBookById = (req: Request, res: Response, next: NextFunction) => 
   return res.json(book);
 };
 
-// Контроллер для создания новой книги
-export const createBook = (req: Request, res: Response, next: NextFunction) => {
+export const createBook = async (req: Request, res: Response, next: NextFunction) => {
   const parsed = createBookSchema.safeParse(req.body);
 
   if (!parsed.success) {
-    return next(new AppError("Validation failed", 400));
+    const details = parsed.error.issues.map((issue) => ({
+      field: issue.path.join("."),
+      message: issue.message,
+    }));
+    return next(new AppError("Validation failed", 400, details));
   }
 
-  const newBook = bookService.createBook(parsed.data);
+  const existingBook = await bookService.getBookByIsbn(parsed.data.isbn);
+  if (existingBook) {
+    return next(new AppError("Book with this ISBN already exists", 409));
+  }
+
+  const newBook = await bookService.createBook(parsed.data);
   return res.status(201).json(newBook);
 };
 
-// Контроллер для обновления книги по id
-export const updateBook = (req: Request, res: Response, next: NextFunction) => {
+export const updateBook = async (req: Request, res: Response, next: NextFunction) => {
   const id = Number(req.params.id);
 
   if (Number.isNaN(id)) {
@@ -77,10 +82,21 @@ export const updateBook = (req: Request, res: Response, next: NextFunction) => {
   const parsed = updateBookSchema.safeParse(req.body);
 
   if (!parsed.success) {
-    return next(new AppError("Validation failed", 400));
+    const details = parsed.error.issues.map((issue) => ({
+      field: issue.path.join("."),
+      message: issue.message,
+    }));
+    return next(new AppError("Validation failed", 400, details));
   }
 
-  const updatedBook = bookService.updateBook(id, parsed.data);
+  if (parsed.data.isbn) {
+    const existingBook = await bookService.getBookByIsbn(parsed.data.isbn);
+    if (existingBook && existingBook.id !== id) {
+      return next(new AppError("Book with this ISBN already exists", 409));
+    }
+  }
+
+  const updatedBook = await bookService.updateBook(id, parsed.data);
 
   if (!updatedBook) {
     return next(new AppError("Book not found", 404));
@@ -89,17 +105,16 @@ export const updateBook = (req: Request, res: Response, next: NextFunction) => {
   return res.json(updatedBook);
 };
 
-// Контроллер для удаления книги по id
-export const deleteBook = (req: Request, res: Response, next: NextFunction) => {
+export const deleteBook = async (req: Request, res: Response, next: NextFunction) => {
   const id = Number(req.params.id);
 
   if (Number.isNaN(id)) {
     return next(new AppError("Invalid book id", 400));
   }
 
-  const deletedBook = bookService.deleteBook(id);
+  const deleted = await bookService.deleteBook(id);
 
-  if (!deletedBook) {
+  if (!deleted) {
     return next(new AppError("Book not found", 404));
   }
 

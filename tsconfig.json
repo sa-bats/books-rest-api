@@ -11,5 +11,6 @@
     "esModuleInterop": true,    // позволяет нормально импортировать библиотеки типа express.
     "skipLibCheck": true,       // ускоряет работу.
     "forceConsistentCasingInFileNames": true    // Помогает избежать ошибок с регистрами (Book.ts vs book.ts).
-  }
+  },
+  "exclude": ["node_modules", "dist", "prisma.config.ts", "prisma/seed.ts"]
 }
