@@ -4,6 +4,21 @@
 
 - Samuil Batšinski
 
+## Prerequisites
+
+- Node.js 18 or higher
+
+No separate database installation required. `npx prisma dev` handles the PostgreSQL database automatically.
+
+## Tech Stack
+
+- Node.js
+- Express
+- TypeScript
+- Prisma 7
+- PostgreSQL (managed via `npx prisma dev`)
+- Zod
+
 ## Setup
 
 1. Install dependencies:
@@ -59,6 +74,59 @@ The API will be available at http://localhost:3000
 | GET | /api/v1/books/:bookId/reviews | Get reviews for a book |
 | POST | /api/v1/books/:bookId/reviews | Create a review |
 | GET | /api/v1/books/:bookId/average-rating | Get average rating |
+
+## Response Formats
+
+### Paginated books list
+
+```json
+{
+  "data": [
+    {
+      "id": 1,
+      "title": "Crime and Punishment",
+      "isbn": "9780140449136",
+      "publishedYear": 1866,
+      "pageCount": 720,
+      "language": "English",
+      "description": "...",
+      "authorId": 1,
+      "publisherId": 1,
+      "author": { "id": 1, "firstName": "Fyodor", "lastName": "Dostoevsky" },
+      "publisher": { "id": 1, "name": "Penguin Books" },
+      "genres": [{ "id": 1, "name": "Classic Literature" }]
+    }
+  ],
+  "pagination": {
+    "currentPage": 1,
+    "totalPages": 2,
+    "totalItems": 12,
+    "itemsPerPage": 10,
+    "hasNextPage": true,
+    "hasPreviousPage": false
+  }
+}
+```
+
+### Validation error (400)
+
+```json
+{
+  "error": "Validation failed",
+  "details": [
+    { "field": "isbn", "message": "ISBN is required" },
+    { "field": "publishedYear", "message": "Expected number, received string" }
+  ]
+}
+```
+
+### Not found error (404)
+
+```json
+{
+  "error": "Book not found"
+}
+```
 
 ## Examples
 
@@ -127,3 +195,31 @@ curl -X POST http://localhost:3000/api/v1/books/1/reviews \
 ```
 curl http://localhost:3000/api/v1/books/1/average-rating
 ```
+
+## AI Usage
+
+### Part 1
+
+ChatGPT was used for initial development. The full assignment was provided as context,
+and additional questions were asked on specific topics:
+
+- how to set up Express with TypeScript
+- how to structure a REST API project
+- how to implement Zod validation in Express
+- how to handle errors with middleware
+- how to implement filtering, sorting and pagination
+
+Claude Code was used for code review and identifying improvements
+(error handling edge cases, ISBN duplicate check, type safety).
+
+### Part 2
+
+Claude Code was used for planning and understanding of the Prisma integration:
+schema design, migrations, seed script, rewriting services with Prisma queries,
+and error handling for Prisma errors.
+
+Prompt used for planning:
+
+"You are a code reviewer and planner helping me complete a university REST API assignment.
+Review my code, check git history, give structured feedback, then create a step by step
+plan for Part 2 (PostgreSQL integration with Prisma)."
